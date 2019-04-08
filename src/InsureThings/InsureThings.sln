@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.572
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Insure.Logic", "Insure.Logic\Insure.Logic.csproj", "{7C260A74-F1F8-4CBB-9CA9-54CEC14CED89}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Insure.Logic.Tests", "Insure.Logic.Tests\Insure.Logic.Tests.csproj", "{A8E43662-500B-40CA-909E-405AE0790AB3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7C260A74-F1F8-4CBB-9CA9-54CEC14CED89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C260A74-F1F8-4CBB-9CA9-54CEC14CED89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C260A74-F1F8-4CBB-9CA9-54CEC14CED89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C260A74-F1F8-4CBB-9CA9-54CEC14CED89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8E43662-500B-40CA-909E-405AE0790AB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8E43662-500B-40CA-909E-405AE0790AB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8E43662-500B-40CA-909E-405AE0790AB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8E43662-500B-40CA-909E-405AE0790AB3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7FD1AAAA-BE29-40AE-8E8D-1A491EDA9CC7}
+	EndGlobalSection
+EndGlobal
