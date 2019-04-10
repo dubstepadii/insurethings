@@ -133,5 +133,36 @@ namespace Insure.Logic.Tests
             Action result = () => _target.GetPolicy("", DateTime.Now.AddDays(-2));
             Assert.ThrowsException<ArgumentNullException>(result);
         }
+
+        [TestMethod]
+        public void GetPolicy_EffectiveDateInFuture_NoPolicyFound()
+        {
+            var result = _target.GetPolicy("object", DateTime.Now.AddYears(2));
+            Assert.IsNull(result);
+        }
+
+        [TestMethod]
+        public void GetPolicy_ValidEffectiveDate_ReturnsPolicy()
+        {
+            var result = _target.GetPolicy("object", DateTime.Now.AddYears(2));
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_ValidPolicy_SellsAndReturnsPolicy()
+        {
+            var risks = new List<Risk>()
+            {
+                new Risk
+                {
+                    Name = "abc",
+                    YearlyPrice = 475,
+                }
+            };
+
+            var result = _target.SellPolicy("object", DateTime.Now, 3, risks);
+
+            Assert.IsNotNull(result);
+        }
     }
 }
