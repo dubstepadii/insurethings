@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 
 namespace Insure.Logic.Tests
 {
@@ -68,6 +69,69 @@ namespace Insure.Logic.Tests
         {
             Action result = () => _target.RemoveRisk("object", new Risk(), DateTime.Now.AddDays(5), DateTime.Now);
             Assert.ThrowsException<ArgumentOutOfRangeException>(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_NameOfInsuredObjectNull_ThrowsException()
+        {
+            Action result = () => _target.SellPolicy(null, DateTime.Now.AddDays(-2), 0, new List<Risk>());
+            Assert.ThrowsException<ArgumentNullException>(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_NameOfInsuredObjectEmpty_ThrowsException()
+        {
+            Action result = () => _target.SellPolicy(string.Empty, DateTime.Now.AddDays(-2), 0, new List<Risk>());
+            Assert.ThrowsException<ArgumentNullException>(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_NameOfInsuredObjectWhiteSpace_ThrowsException()
+        {
+            Action result = () => _target.SellPolicy("", DateTime.Now.AddDays(-2), 0, new List<Risk>());
+            Assert.ThrowsException<ArgumentNullException>(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_ValidFromInPast_ThrowsException()
+        {
+            Action result = () => _target.SellPolicy("object", DateTime.Now.AddDays(-2), 0, new List<Risk>());
+            Assert.ThrowsException<ArgumentOutOfRangeException>(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_ValidMonthsZero_ThrowsException()
+        {
+            Action result = () => _target.SellPolicy("object", DateTime.Now, 0, new List<Risk>());
+            Assert.ThrowsException<ArgumentOutOfRangeException>(result);
+        }
+
+        [TestMethod]
+        public void SellPolicy_SelectedRisksEmpty_ThrowsException()
+        {
+            Action result = () => _target.SellPolicy("object", DateTime.Now, 11, new List<Risk>());
+            Assert.ThrowsException<ArgumentOutOfRangeException>(result);
+        }
+
+        [TestMethod]
+        public void GetPolicy_NameOfInsuredObjectNull_ThrowsException()
+        {
+            Action result = () => _target.GetPolicy(null, DateTime.Now.AddDays(-2));
+            Assert.ThrowsException<ArgumentNullException>(result);
+        }
+
+        [TestMethod]
+        public void GetPolicy_NameOfInsuredObjectEmpty_ThrowsException()
+        {
+            Action result = () => _target.GetPolicy(string.Empty, DateTime.Now.AddDays(-2));
+            Assert.ThrowsException<ArgumentNullException>(result);
+        }
+
+        [TestMethod]
+        public void GetPolicy_NameOfInsuredObjectWhiteSpace_ThrowsException()
+        {
+            Action result = () => _target.GetPolicy("", DateTime.Now.AddDays(-2));
+            Assert.ThrowsException<ArgumentNullException>(result);
         }
     }
 }
