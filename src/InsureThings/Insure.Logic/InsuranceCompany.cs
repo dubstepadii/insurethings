@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Caching;
 using System.Linq;
+using System.Runtime.Caching;
 
 public class InsuranceCompany : IInsuranceCompany
 {
     private MemoryCache _db = MemoryCache.Default;
-    private object _dbLock = new object();
-    private const string AvailableRisksKey = "AvailableRisksKey";
+    private readonly object _dbLock = new object();
 
-    public InsuranceCompany()
+    public InsuranceCompany(IList<Risk> availableRisks)
     {
+        AvailableRisks = availableRisks;
     }
 
     /// <summary>
@@ -22,15 +22,7 @@ public class InsuranceCompany : IInsuranceCompany
     /// <summary>
     /// List of the risks that can be insured. List can be updated at any time
     /// </summary>
-    public IList<Risk> AvailableRisks
-    {
-        get
-        {
-            return this.GetFromDb<IList<Risk>>(AvailableRisksKey);
-        }
-
-        set => throw new NotImplementedException();
-    }
+    public IList<Risk> AvailableRisks { get; set; }
 
     /// <summary>
     /// Add risk to the policy of insured object.
@@ -51,8 +43,14 @@ public class InsuranceCompany : IInsuranceCompany
             throw new ArgumentOutOfRangeException(nameof(validFrom));
         }
 
+        var policy = this.GetPolicy(nameOfInsuredObject, effectiveDate);
+        if (policy == null)
+        {
+            throw new NullReferenceException($"No valid policy found by name {nameOfInsuredObject}");
+        }
 
-
+        policy.InsuredRisks.Add(risk);
+        this.WriteToDb(nameOfInsuredObject, policy);
     }
 
     /// <summary>
@@ -63,7 +61,8 @@ public class InsuranceCompany : IInsuranceCompany
     /// <returns></returns>
     public IPolicy GetPolicy(string nameOfInsuredObject, DateTime effectiveDate)
     {
-        throw new NotImplementedException();
+        var policy = this.ReadFromDb<IPolicy>(nameOfInsuredObject);
+        return policy.ValidFrom <= effectiveDate && policy.ValidTill >= effectiveDate ? policy : null;
     }
 
     /// <summary>
@@ -75,7 +74,24 @@ public class InsuranceCompany : IInsuranceCompany
     /// <param name="effectiveDate">Point of date and time, when the policy effective</param>
     public void RemoveRisk(string nameOfInsuredObject, Risk risk, DateTime validTill, DateTime effectiveDate)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(nameOfInsuredObject))
+        {
+            throw new ArgumentNullException(nameof(nameOfInsuredObject));
+        }
+
+        var policy = this.GetPolicy(nameOfInsuredObject, effectiveDate);
+        if (policy == null)
+        {
+            throw new NullReferenceException($"Valid policy not found by name ${nameOfInsuredObject}");
+        }
+
+        if (validTill >= policy.ValidFrom)
+        {
+            throw new ArgumentOutOfRangeException(nameof(validTill));
+        }
+
+        policy.InsuredRisks.Remove(risk);
+        this.WriteToDb<IPolicy>(nameOfInsuredObject, policy);
     }
 
     /// <summary>
@@ -88,7 +104,41 @@ public class InsuranceCompany : IInsuranceCompany
     /// <returns>Information about policy</returns>
     public IPolicy SellPolicy(string nameOfInsuredObject, DateTime validFrom, short validMonths, IList<Risk> selectedRisks)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(nameOfInsuredObject))
+        {
+            throw new ArgumentNullException(nameof(nameOfInsuredObject));
+        }
+
+        if (validFrom < DateTime.Now)
+        {
+            throw new ArgumentOutOfRangeException(nameof(validFrom));
+        }
+
+        if (validMonths == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(validMonths));
+        }
+
+        if (!selectedRisks.Any())
+        {
+            throw new ArgumentOutOfRangeException(nameof(selectedRisks));
+        }
+
+        var policy = this.GetPolicy(nameOfInsuredObject, validFrom.AddMonths(validMonths));
+        if (policy == null)
+        {
+            throw new NullReferenceException($"No valid policy found by name {nameOfInsuredObject}");
+        }
+
+        decimal allRiskYearPrices = 0;
+        selectedRisks.Select(x => allRiskYearPrices += x.YearlyPrice);
+        var premium = allRiskYearPrices * (validMonths / 12);
+
+        policy.ValidFrom = validFrom;
+        policy.ValidTill = validFrom.AddMonths(validMonths);
+        policy.Premium = premium;
+
+        return policy;
     }
 
     /// <summary>
@@ -97,19 +147,49 @@ public class InsuranceCompany : IInsuranceCompany
     /// <typeparam name="T">Data type which will be retrieved</typeparam>
     /// <param name="key">Key value</param>
     /// <returns></returns>
-    private T GetFromDb<T>(string key)
+    private T ReadFromDb<T>(string key)
     {
         T result = default(T);
 
         if (_dbLock == null)
         {
-            var data = _db.Get(key);
-            if (data != null)
+            lock (_dbLock)
             {
-                result = (T)data;
+                var data = _db.Get(key);
+                if (data != null)
+                {
+                    result = (T)data;
+                }
             }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Write data to DB
+    /// </summary>
+    /// <typeparam name="T">Data type which will be saved</typeparam>
+    /// <param name="key">Key for object to save</param>
+    /// <param name="data">Data object</param>
+    private void WriteToDb<T>(string key, T data)
+    {
+        var existingData = _db.Get(key);
+        if (data == null)
+        {
+            if (_dbLock == null)
+            {
+                lock (_dbLock)
+                {
+                    existingData = _db.Get(key);
+                    if (data != null)
+                    {
+                        _db.Remove(key);
+                    }
+
+                    _db.Add(key, data, new CacheItemPolicy());
+                }
+            }
+        }
     }
 }

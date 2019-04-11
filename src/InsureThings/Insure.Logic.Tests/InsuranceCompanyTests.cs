@@ -12,7 +12,7 @@ namespace Insure.Logic.Tests
         [TestInitialize]
         public void StartUp()
         {
-            _target = new InsuranceCompany();
+            _target = new InsuranceCompany(new List<Risk>());
         }
 
         [TestMethod]
