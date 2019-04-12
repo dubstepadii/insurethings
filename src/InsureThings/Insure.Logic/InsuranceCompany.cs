@@ -61,6 +61,11 @@ public class InsuranceCompany : IInsuranceCompany
     /// <returns></returns>
     public IPolicy GetPolicy(string nameOfInsuredObject, DateTime effectiveDate)
     {
+        if (string.IsNullOrWhiteSpace(nameOfInsuredObject))
+        {
+            throw new ArgumentNullException(nameof(nameOfInsuredObject));
+        }
+
         var policy = this.ReadFromDb<IPolicy>(nameOfInsuredObject);
         return policy.ValidFrom <= effectiveDate && policy.ValidTill >= effectiveDate ? policy : null;
     }
@@ -85,7 +90,7 @@ public class InsuranceCompany : IInsuranceCompany
             throw new NullReferenceException($"Valid policy not found by name ${nameOfInsuredObject}");
         }
 
-        if (validTill >= policy.ValidFrom)
+        if (validTill <= policy.ValidFrom)
         {
             throw new ArgumentOutOfRangeException(nameof(validTill));
         }
@@ -131,12 +136,17 @@ public class InsuranceCompany : IInsuranceCompany
         }
 
         decimal allRiskYearPrices = 0;
-        selectedRisks.Select(x => allRiskYearPrices += x.YearlyPrice);
-        var premium = allRiskYearPrices * (validMonths / 12);
+        foreach (var risk in selectedRisks)
+        {
+            allRiskYearPrices = +risk.YearlyPrice;
+        }
+
+        var premium = allRiskYearPrices * (decimal)(validMonths / 12f);
 
         policy.ValidFrom = validFrom;
         policy.ValidTill = validFrom.AddMonths(validMonths);
         policy.Premium = premium;
+        policy.InsuredRisks = selectedRisks;
 
         return policy;
     }
@@ -150,16 +160,12 @@ public class InsuranceCompany : IInsuranceCompany
     private T ReadFromDb<T>(string key)
     {
         T result = default(T);
-
-        if (_dbLock == null)
+        lock (_dbLock)
         {
-            lock (_dbLock)
+            var data = _db.Get(key);
+            if (data != null)
             {
-                var data = _db.Get(key);
-                if (data != null)
-                {
-                    result = (T)data;
-                }
+                result = (T)data;
             }
         }
 
@@ -177,18 +183,15 @@ public class InsuranceCompany : IInsuranceCompany
         var existingData = _db.Get(key);
         if (data == null)
         {
-            if (_dbLock == null)
+            lock (_dbLock)
             {
-                lock (_dbLock)
+                existingData = _db.Get(key);
+                if (data != null)
                 {
-                    existingData = _db.Get(key);
-                    if (data != null)
-                    {
-                        _db.Remove(key);
-                    }
-
-                    _db.Add(key, data, new CacheItemPolicy());
+                    _db.Remove(key);
                 }
+
+                _db.Add(key, data, new CacheItemPolicy());
             }
         }
     }
